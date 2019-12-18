@@ -50,7 +50,7 @@ retry:
         jmp retry
 
 fin:
-        hlt
+        hlt 
         jmp fin
 
 error:
@@ -68,13 +68,25 @@ putloop:
         jmp putloop
 
 next:
-        mov ax,es
-        add ax,0x20
-        mov es,ax
-        add cl,1
-        cmp cl,18
-        jbe readloop 
+        mov ax,es                 ;
+        add ax,0x20               ;
+        mov es,ax                 ;es = es+0x20
+        add cl,1                  ;扇区号+1
+        cmp cl,18                 ;
+        jbe readloop              ;扇区号<=18,跳转到readloop
+        mov cl,1                  ;设置扇区号为1，读取其他磁头
+        add dh,1                  ;dh加1,切换到1磁头
+        cmp dh,2
+        jb readloop               ;磁头号<2,跳转到readloop
+        mov dh,0                  ;初始化dh为0
+        add ch,1                  ;改变柱面号，切换柱面
+        cmp ch,10
+        jb readloop
+        
 
+start:
+        mov [0xff0],ch
+        jmp 0xc200                ;跳转到磁盘文件加载地址
 
 msg:
 

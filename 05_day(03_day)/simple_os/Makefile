@@ -12,6 +12,7 @@ simple.sys: simple.nas
 	$(NASK) simple.nas simple.sys simple.lst
 
 run:
+	copy hello.img $(PATH)\qemu\fdimage0.bin
 	$(PATH)\make.exe -C $(PATH)\qemu
 
 clean:

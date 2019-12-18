@@ -33,14 +33,15 @@ entry:
         mov ax,0x0820            ;read disk
         mov es,ax
         mov cl,1                  ;设置起始读取1号扇区
+        mov ch,0                  ;设置0柱面
+        mov dh,0
 
 readloop:
         mov si,0
 
 retry:
         mov ax,0x0201             ;设置AH=2,AL=1(读扇区，一个扇区)
-        mov ch,0                  ;设置0柱面
-        mov dx,0                  ;设置DH=0,DL=0(磁头号为0，驱动器为0)
+        mov dl,0                  ;设置DH=0,DL=0(磁头号为0，驱动器为0)
         mov bx,0                  ;
         add si,1                  ;允许错误循环次数
         int 0x13                  ;中断读磁盘

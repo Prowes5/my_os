@@ -6,6 +6,7 @@ hello.img: ipl.nas
 		wbinimg src:ipl.bin len:512 from:0 to:0 imgout:hello.img
 
 run:
+	copy hello.img $(PATH)\qemu\fdimage0.bin
 	$(PATH)\make.exe -C $(PATH)\qemu
 
 clean:

@@ -8,19 +8,46 @@ int io_load_eflags(void);
 
 void init_colour(void);
 void set_colour(int start, int end, unsigned char *rgb);
+void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1);
+
+#define COL8_000000		0
+#define COL8_FF0000		1
+#define COL8_00FF00		2
+#define COL8_0000FF		3
+#define COL8_FFFF00		4
+#define COL8_FF00FF		5
+#define COL8_00FFFF		6
+#define COL8_FFFFFF		7
+#define COL8_C6C6C6		8
+#define COL8_840000		9
+#define COL8_008400		10
+#define COL8_848400		11
+#define COL8_000084		12
+#define COL8_840084		13
+#define COL8_008484		14
+#define	COL8_848484		15
+
 
 
 void HariMain(void)
 {
-	int i;
 	char *p = (char *)0xa0000;
 
+	int xsize = 320;
+	int ysize = 200;
 	init_colour();
-	for(i = 0; i <= 0xffff; i++) {
-		//write_memory(i, 0xf & i);
-		//p  = (char *)i;				//(char *)进行类型转换，防止编译器报警告
-		p[i] = i & 0xf;
-	}
+
+	//主背景色
+	boxfill8(p, xsize, COL8_0000FF, 0, 0, xsize, ysize);
+
+	//任务栏
+	boxfill8(p, xsize, COL8_C6C6C6, 0, ysize-15, xsize, ysize);
+	//任务栏阴影
+
+	boxfill8(p, xsize, COL8_FFFFFF, 0, ysize-15, xsize, ysize-15);
+
+	//boxfill8(p, xsize, COL8_000000, 0, ysize-15+1, xsize, ysize-15+1);
+
 
 fin:
 	io_hlt();
@@ -34,7 +61,7 @@ void init_colour(void) {
 		0x00, 0x00, 0x00,		//黑色
 		0xff, 0x00,	0x00,		//亮红
 		0x00, 0xff, 0x00,		//亮绿
-		0x00, 0x00, 0x00,		//亮蓝
+		0x00, 0x00, 0xff,		//亮蓝
 		0xff, 0xff, 0x00,		//亮黄
 		0xff, 0x00, 0xff,		//亮紫
 		0x00, 0xff, 0xff,		//浅亮蓝
@@ -63,4 +90,20 @@ void set_colour(int start, int end, unsigned char *rgb) {
 		rgb += 3;
 	}
 	io_store_eflags(eflags);
+}
+
+/*
+*1.vram:显存地址
+*2.xsize:固定常数
+*3.c:要显示的颜色
+*4.x0,y0:矩形左上角坐标
+*5.x1,y1:矩形右下角坐标
+*/
+void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1) {
+	int x, y;
+	for(y = y0; y <= y1; y++) {
+		for(x = x0; x <= x1; x++) {
+			vram[y * xsize + x] = c;
+		}
+	}
 }

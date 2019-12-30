@@ -9,8 +9,16 @@ int io_load_eflags(void);
 void init_colour(void);
 void set_colour(int start, int end, unsigned char *rgb);
 void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1);
-void create_hollow_button(int xsize, int x0, int y0, int length, int width, unsigned char c);
-void create_raised_button(int xsize, int x0, int y0, int length, int width, unsigned char c)
+void create_hollow_button(char *vram, int xsize, int x0, int y0, int length, int width, unsigned char c);
+void create_raised_button(char *vram, int xsize, int x0, int y0, int length, int width, unsigned char c);
+void init_desktop(char *vram, int xsize, int ysize);
+
+struct BOOTINFO
+{
+	char cyls, leds, vmode, reserve;
+	short scrnx, scrny;
+	char *vram;
+};
 
 #define COL8_000000		0
 #define COL8_FF0000		1
@@ -29,30 +37,23 @@ void create_raised_button(int xsize, int x0, int y0, int length, int width, unsi
 #define COL8_008484		14
 #define	COL8_848484		15
 
-
-
 void HariMain(void)
 {
-	char *p = (char *)0xa0000;
+	//定义一个BOOTINFO结构体
+	struct BOOTINFO *bootdata = (struct BOOTINFO *)0x0ff0;
 
-	int xsize = 320;
-	int ysize = 200;
+	static char A[16] = {
+		0x00, 0x18, 0x18, 0x18, 0x18, 0x24, 0x24, 0x24,
+		0x24, 0x7e, 0x42, 0x42, 0x42, 0xe7, 0x00,0x00
+	};
+
+	//初始化调色板
 	init_colour();
+	//初始化桌面
+	init_desktop(bootdata->vram, bootdata->scrnx, bootdata->scrny);
 
-	//主背景色
-	boxfill8(p, xsize, COL8_0000FF, 0, 0, xsize, ysize);
+	putchar(bootdata->vram, bootdata->scrnx, 0, 0, COL8_FFFFFF, A);
 
-	//任务栏
-	boxfill8(p, xsize, COL8_C6C6C6, 0, ysize-15, xsize, ysize);
-	
-	//任务栏阴影
-	boxfill8(p, xsize, COL8_FFFFFF, 0, ysize-15, xsize, ysize-15);
-	
-	//左下角按钮
-	create_raised_button(xsize, 0, ysize-13, 30, 13, COL8_C6C6C6);
-
-	//通知栏
-	create_hollow_button(xsize, xsize-40, ysize-13, 40, 13, COL8_C6C6C6);
 
 
 fin:
@@ -122,8 +123,7 @@ void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, i
 *4.c:颜色
 */
 
-void create_hollow_button(int xsize, int x0, int y0, int length, int width, unsigned char c) {
-	char *vram = (char *)0xa0000;
+void create_hollow_button(char *vram, int xsize, int x0, int y0, int length, int width, unsigned char c) {
 	boxfill8(vram, xsize, c, x0, y0, x0+length-2, y0+width-2);
 	//上边缘
 	boxfill8(vram, xsize, COL8_848484, x0, y0, x0+length-2, y0);
@@ -143,8 +143,7 @@ void create_hollow_button(int xsize, int x0, int y0, int length, int width, unsi
 *4.c:颜色
 */
 
-void create_raised_button(int xsize, int x0, int y0, int length, int width, unsigned char c) {
-	char *vram = (char *)0xa0000;
+void create_raised_button(char *vram, int xsize, int x0, int y0, int length, int width, unsigned char c) {
 	boxfill8(vram, xsize, c, x0, y0, x0+length-2, y0+width-2);
 	//上边缘
 	boxfill8(vram, xsize, COL8_FFFFFF, x0, y0, x0+length-2, y0);
@@ -154,4 +153,52 @@ void create_raised_button(int xsize, int x0, int y0, int length, int width, unsi
 	boxfill8(vram, xsize, COL8_848484, x0, y0+width-2, x0+length-2, y0+width-2);
 	//右边缘
 	boxfill8(vram, xsize, COL8_848484, x0+length-2, y0, x0+length-2, y0+width-2);
+}
+
+void init_desktop(char *vram, int xsize, int ysize) {
+	//主背景色
+	boxfill8(vram, xsize, COL8_0000FF, 0, 0, xsize, ysize);
+
+	//任务栏
+	boxfill8(vram, xsize, COL8_C6C6C6, 0, ysize-15, xsize, ysize);
+	
+	//任务栏阴影
+	boxfill8(vram, xsize, COL8_FFFFFF, 0, ysize-15, xsize, ysize-15);
+	
+	//左下角按钮
+	create_raised_button(vram, xsize, 0, ysize-13, 30, 13, COL8_C6C6C6);
+
+	//通知栏
+	create_hollow_button(vram, xsize, xsize-40, ysize-13, 40, 13, COL8_C6C6C6);
+}
+
+/*
+*1.vram: 显卡地址
+*2.xsize: 分辨率常数
+*3.x,y: 起始位置
+*4.c: 颜色
+*5.font: 字母像素数组
+*/
+void putchar(char *vram, int xsize, int x, int y, char c, char *font) {
+	int i;
+	char d;
+	for(i = 0; i < 16; i++) {
+		d = font[i];
+		if ((d & 0x80) != 0)
+			vram[y + i * xsize + x + 0] = c;
+		if ((d & 0x40) != 0)
+			vram[y + i * xsize + x + 1] = c;
+		if ((d & 0x20) != 0)
+			vram[y + i * xsize + x + 2] = c;
+		if ((d & 0x10) != 0)
+			vram[y + i * xsize + x + 3] = c;
+		if ((d & 0x08) != 0)
+			vram[y + i * xsize + x + 4] = c;
+		if ((d & 0x04) != 0)
+			vram[y + i * xsize + x + 5] = c;
+		if ((d & 0x02) != 0)
+			vram[y + i * xsize + x + 6] = c;
+		if ((d & 0x01) != 0)
+			vram[y + i * xsize + x + 7] = c;
+	}
 }

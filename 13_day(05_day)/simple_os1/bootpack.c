@@ -1,3 +1,5 @@
+#include<stdio.h>
+
 void io_hlt(void);
 void write_memory(int addr, int value);
 void io_sti(void);
@@ -12,6 +14,9 @@ void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, i
 void create_hollow_button(char *vram, int xsize, int x0, int y0, int length, int width, unsigned char c);
 void create_raised_button(char *vram, int xsize, int x0, int y0, int length, int width, unsigned char c);
 void init_desktop(char *vram, int xsize, int ysize);
+
+void putchar(char *vram, int xsize, int x, int y, char c, char *font);
+void putchar_asc(char *vram, int xsize, int x, int y, char c, unsigned char *s);
 
 struct BOOTINFO
 {
@@ -41,6 +46,7 @@ void HariMain(void)
 {
 	//定义一个BOOTINFO结构体
 	struct BOOTINFO *bootdata = (struct BOOTINFO *)0x0ff0;
+	char tmp[50];
 
 	static char A[16] = {
 		0x00, 0x18, 0x18, 0x18, 0x18, 0x24, 0x24, 0x24,
@@ -52,9 +58,12 @@ void HariMain(void)
 	//初始化桌面
 	init_desktop(bootdata->vram, bootdata->scrnx, bootdata->scrny);
 
-	putchar(bootdata->vram, bootdata->scrnx, 0, 0, COL8_FFFFFF, A);
+	//putchar(bootdata->vram, bootdata->scrnx, 0, 0, COL8_FFFFFF, A);
 
-
+	putchar_asc(bootdata->vram, bootdata->scrnx, 8, 8, COL8_FFFFFF, "test");
+	putchar_asc(bootdata->vram, bootdata->scrnx, 8, 25, COL8_FFFFFF, "ABC");
+	sprintf(tmp, "scanx = %d", bootdata->scrnx);
+	putchar_asc(bootdata->vram, bootdata->scrnx, 8, 40, COL8_FFFFFF, tmp);
 
 fin:
 	io_hlt();
@@ -185,20 +194,35 @@ void putchar(char *vram, int xsize, int x, int y, char c, char *font) {
 	for(i = 0; i < 16; i++) {
 		d = font[i];
 		if ((d & 0x80) != 0)
-			vram[y + i * xsize + x + 0] = c;
+			vram[(y + i) * xsize + x + 0] = c;
 		if ((d & 0x40) != 0)
-			vram[y + i * xsize + x + 1] = c;
+			vram[(y + i) * xsize + x + 1] = c;
 		if ((d & 0x20) != 0)
-			vram[y + i * xsize + x + 2] = c;
+			vram[(y + i) * xsize + x + 2] = c;
 		if ((d & 0x10) != 0)
-			vram[y + i * xsize + x + 3] = c;
+			vram[(y + i) * xsize + x + 3] = c;
 		if ((d & 0x08) != 0)
-			vram[y + i * xsize + x + 4] = c;
+			vram[(y + i) * xsize + x + 4] = c;
 		if ((d & 0x04) != 0)
-			vram[y + i * xsize + x + 5] = c;
+			vram[(y + i) * xsize + x + 5] = c;
 		if ((d & 0x02) != 0)
-			vram[y + i * xsize + x + 6] = c;
+			vram[(y + i) * xsize + x + 6] = c;
 		if ((d & 0x01) != 0)
-			vram[y + i * xsize + x + 7] = c;
+			vram[(y + i) * xsize + x + 7] = c;
+	}
+}
+/*
+*封装输出字符串函数
+*1.vram: 显卡地址
+*2.xsize: 分辨率常数
+*3.x,y: 起始位置
+*4.c: 颜色
+*5.font: 字符串
+*/
+void putchar_asc(char *vram, int xsize, int x, int y, char c, unsigned char *s) {
+	extern char hankaku[4096];
+	for(; *s != 0; s++) {
+		putchar(vram, xsize, x, y, c, hankaku + *s * 16);
+		x += 8;
 	}
 }

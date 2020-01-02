@@ -9,6 +9,8 @@ OBJ2BIM = $(PATH)\obj2bim.exe
 BIM2HRB = $(PATH)\bim2hrb.exe
 RULEFILE = $(PATH)\haribote\haribote.rul
 EDIMG = $(PATH)\edimg.exe
+MAKEFONT = $(PATH)\makefont.exe
+BIN2OBJ = $(PATH)\bin2obj.exe
 
 
 hello.img: ipl.nas simple.sys
@@ -27,9 +29,15 @@ asmhead.bin: asmhead.nas
 bootpack.hrb: bootpack.bim
 	$(BIM2HRB) bootpack.bim bootpack.hrb 0
 
-bootpack.bim: bootpack.obj naskfunc.obj
+bootpack.bim: bootpack.obj naskfunc.obj hankaku.obj
 	$(OBJ2BIM) @$(RULEFILE) out:bootpack.bim stack:3136k map:bootpack.map \
-		bootpack.obj naskfunc.obj
+		bootpack.obj naskfunc.obj hankaku.obj
+
+hankaku.obj: hankaku.bin
+	$(BIN2OBJ) hankaku.bin hankaku.obj _hankaku
+
+hankaku.bin: hankaku.txt
+	$(MAKEFONT) hankaku.txt hankaku.bin
 
 bootpack.obj: bootpack.nas
 	$(NASK) bootpack.nas bootpack.obj bootpack.lst

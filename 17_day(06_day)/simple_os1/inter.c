@@ -6,6 +6,7 @@
 void io_out8(int port, int addr);
 void io_hlt();
 
+//初始化PIC
 void init_pic() {
     io_out8(PIC0_IMR, 0xff);//禁止所有中断
     io_out8(PIC1_IMR, 0xff);//禁止所有中断
@@ -24,6 +25,8 @@ void init_pic() {
     io_out8(PIC1_IMR, 0xff);//禁止所有中断
 }
 
+
+//定义键盘中断
 void inthandler21(int *esp) {
     struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
     boxfill8(binfo->vram, binfo->scrnx, COL8_000000, 0, 0, 32 * 8 - 1, 15);
@@ -34,6 +37,8 @@ void inthandler21(int *esp) {
     }
 }
 
+
+//定义鼠标中断
 void inthandler2c(int *esp) {
     struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
     boxfill8(binfo->vram, binfo->scrnx, COL8_000000, 0, 0, 32 * 8 - 1, 15);
